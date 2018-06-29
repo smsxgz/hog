@@ -41,26 +41,31 @@ def wrapper_step(env, action):
     return s, p, done, score, s_key
 
 
+def get_a_trace(values, env):
+    s, p = env.reset()
+    s_key = tuple(reversed(s)) if p == 1 else s
+
+    trace = []
+    done = False
+    while values[s_key].untried == [] and not done:
+        a = values[s_key].UCTselect()
+        trace.append((s, p, a))
+        s, p, done, score, s_key = wrapper_step(env, a)
+
+    if values[s_key].untried != [] and not done:
+        a = np.random.choice(values[s_key].untried)
+        trace.append((s, p, a))
+        s, p, done, score, s_key = wrapper_step(env, a)
+
+    while not done:
+        _, _, done, score, _ = wrapper_step(env, np.random.choice(ACTIONSPACE))
+
+    return trace, score
+
+
 def UCT(values, env, iters=500000):
     for i in range(iters):
-        s, p = env.reset()
-        s_key = tuple(reversed(s)) if p == 1 else s
-
-        trace = []
-        done = False
-        while values[s_key].untried == [] and not done:
-            a = values[s_key].UCTselect()
-            trace.append((s, p, a))
-            s, p, done, score, s_key = wrapper_step(env, a)
-
-        if values[s_key].untried != [] and not done:
-            a = np.random.choice(values[s_key].untried)
-            trace.append((s, p, a))
-            s, p, done, score, s_key = wrapper_step(env, a)
-
-        while not done:
-            _, _, done, score, _ = wrapper_step(env,
-                                                np.random.choice(ACTIONSPACE))
+        trace, score = get_a_trace(values, env)
 
         for s, p, a in trace:
             if p == 0:
@@ -76,24 +81,7 @@ def UCT_test(values, env, time_limit=2):
     count = 0
     while True:
         count += 1
-        s, p = env.reset()
-        s_key = tuple(reversed(s)) if p == 1 else s
-
-        trace = []
-        done = False
-        while values[s_key].untried == [] and not done:
-            a = values[s_key].UCTselect()
-            trace.append((s, p, a))
-            s, p, done, score, s_key = wrapper_step(env, a)
-
-        if values[s_key].untried != [] and not done:
-            a = np.random.choice(values[s_key].untried)
-            trace.append((s, p, a))
-            s, p, done, score, s_key = wrapper_step(env, a)
-
-        while not done:
-            _, _, done, score, _ = wrapper_step(env,
-                                                np.random.choice(ACTIONSPACE))
+        trace, score = get_a_trace(values, env)
 
         for s, p, a in trace:
             if p == 0:

@@ -1,14 +1,13 @@
 import ray
 import time
 from env import Env
-import numpy as np
 from collections import defaultdict
 
 ACTIONSPACE = list(range(11))
 
 from mcts import Node
-from mcts import wrapper_step
 from mcts import UCT
+from mcts import get_a_trace
 
 
 @ray.remote
@@ -18,24 +17,7 @@ def get_trace(values, time_limit=0.1):
     start = time.time()
 
     while True:
-        s, p = env.reset()
-        s_key = tuple(reversed(s)) if p == 1 else s
-
-        trace = []
-        done = False
-        while values[s_key].untried == [] and not done:
-            a = values[s_key].UCTselect()
-            trace.append((s, p, a))
-            s, p, done, score, s_key = wrapper_step(env, a)
-
-        if values[s_key].untried != [] and not done:
-            a = np.random.choice(values[s_key].untried)
-            trace.append((s, p, a))
-            s, p, done, score, s_key = wrapper_step(env, a)
-
-        while not done:
-            _, _, done, score, _ = wrapper_step(env,
-                                                np.random.choice(ACTIONSPACE))
+        trace, score = get_a_trace(values, env)
 
         traces.append([score, trace])
         if time.time() - start > time_limit:
