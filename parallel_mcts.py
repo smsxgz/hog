@@ -1,6 +1,6 @@
 import ray
 import time
-import tqdm
+import copy
 import pickle
 from env import Env
 from collections import defaultdict
@@ -32,7 +32,7 @@ def UCT_parallel(values, iters=500000, cores=4, time_limit=0.1):
     for i in range(iters):
         if i % 100 == 0:
             print('{}th-iter / {}iters'.format(i, iters))
-        
+
         results = ray.get(
             [get_trace.remote(values, time_limit) for _ in range(cores)])
 
@@ -57,10 +57,13 @@ def UCT_parallel_v2(values, iters=500000, cores=4):
     for i in range(iters):
         if i % 100 == 0:
             print('{}th-iter / {}iters'.format(i, iters))
-        
-        traces = ray.get([get_trace_v2.remote(values) for _ in range(cores)])
 
-        for trace, score in traces:
+        traces = [
+            get_trace_v2.remote(copy.deepcopy(values)) for _ in range(cores)
+        ]
+
+        for task in traces:
+            trace, score = ray.get(task)
             for s, p, a in trace:
                 if p == 0:
                     values[s].update(a, score)
@@ -75,7 +78,7 @@ def save_values(values, filename):
     for s in values:
         d = values[s].tried
         v[s] = d
-    with open(filename, 'wb') as f:
+    with open('save/' + filename, 'wb') as f:
         pickle.dump(v, f)
 
     q = {}
@@ -84,7 +87,7 @@ def save_values(values, filename):
         for i in range(11):
             d = v[s].get(i, {'visits': 2, 'wins': 1})
             q[s].append(d['wins'] / d['visits'])
-    with open('strategy-' + filename, 'wb') as f:
+    with open('save/strategy-' + filename, 'wb') as f:
         pickle.dump(q, f)
 
 
@@ -104,7 +107,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cores', type=int, default=4)
     parser.add_argument('--time_limit', type=float, default=0.1)
-    parser.add_argument('--init_iters', type=int, default=100000)
+    # parser.add_argument('--init_iters', type=int, default=100000)
     parser.add_argument('--iters', type=int, default=5000)
 
     args = parser.parse_args()
@@ -112,14 +115,12 @@ if __name__ == '__main__':
     ray.init()
 
     values = defaultdict(Node)
-    print('Initialize values...')
-    values = UCT(values, Env(), args.init_iters)
-    save_values(values, 'save/mcts_v0.pkl')
+    print('Restore values...')
+    values = load_values('save/mcts_v0.pkl')
 
     print('Parallely update values...')
     values = UCT_parallel(
         values, args.iters, cores=args.cores, time_limit=args.time_limit)
     # values = UCT_parallel_v2(values, args.iters, cores=args.cores)
 
-    save_values(values, 'save/mcts_v1.pkl')
-
+    save_values(values, 'mcts_v1.pkl')
