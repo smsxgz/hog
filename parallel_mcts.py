@@ -89,7 +89,6 @@ if __name__ == '__main__':
 
     ray.init()
 
-    values = defaultdict(Node)
     print('Restore values...')
     values = load_values('save/mcts_v0.pkl')
 

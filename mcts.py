@@ -70,6 +70,9 @@ def get_a_trace(values, env):
 
 def UCT(values, env, iters=500000):
     for i in range(iters):
+        if i % 1000 == 0:
+            print('{}th-iter / {}iters'.format(i, iters))
+
         trace, score = get_a_trace(values, env)
 
         for s, p, a in trace:
@@ -111,9 +114,9 @@ def load_values(filename):
 
 
 if __name__ == '__main__':
-    values = defaultdict(Node)
     env = Env()
 
+    values = load_values('save/mcts_v0.pkl')
     values = UCT(values, env, 200000)
 
     save_values(values, 'mcts_v1.pkl')
