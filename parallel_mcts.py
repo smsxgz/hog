@@ -80,7 +80,7 @@ if __name__ == '__main__':
     print('Parallely update values...')
     # values = UCT_parallel(
     #     values, args.iters, cores=args.cores, time_limit=args.time_limit)
-    values = UCT_parallel(values, args.iters, cores=args.cores)
+    values = UCT_parallel_v2(values, args.iters, cores=args.cores)
 
     v = {}
     for s in values:
