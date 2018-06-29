@@ -1,3 +1,5 @@
+import ray
+import time
 from env import Env
 import numpy as np
 from collections import defaultdict
@@ -36,8 +38,24 @@ def get_state_key(state, player):
         return tuple(reversed(state))
 
 
-def UCT(values, env, iters=500000):
-    for i in range(iters):
+def wrapper_step(env, action):
+    s, p, w = env.step(action)
+    done = False
+    score = None
+    if w is not None:
+        done = True
+        score = 1 - w
+    s_key = get_state_key(s, p)
+    return s, p, done, score, s_key
+
+
+@ray.remote
+def get_trace(values, time_limit=60):
+    env = Env()
+    traces = []
+    start = time.time()
+
+    while True:
         s, p = env.reset()
         s_key = get_state_key(s, p)
 
@@ -46,43 +64,46 @@ def UCT(values, env, iters=500000):
         while values[s_key].untried == [] and not done:
             a = values[s_key].UCTselect()
             trace.append((s, p, a))
-
-            s, p, w = env.step(a)
-            s_key = get_state_key(s, p)
-            if w is not None:
-                done = True
-                score = 1 - w
+            s, p, done, score, s_key = wrapper_step(env, a)
 
         if values[s_key].untried != [] and not done:
             a = np.random.choice(values[s_key].untried)
             trace.append((s, p, a))
-
-            s, p, w = env.step(a)
-            s_key = get_state_key(s, p)
-            if w is not None:
-                done = True
-                score = 1 - w
+            s, p, done, score, s_key = wrapper_step(env, a)
 
         while not done:
-            *_, w = env.step(np.random.choice(ACTIONSPACE))
-            if w is not None:
-                done = True
-                score = 1 - w
+            _, _, done, score, _ = wrapper_step(env,
+                                                np.random.choice(ACTIONSPACE))
 
-        for s, p, a in trace:
-            if p == 0:
-                values[s].update(a, score)
-            if p == 1:
-                values[tuple(reversed(s))].update(a, 1 - score)
+        traces.append([score, trace])
+        if time.time() - start > time_limit:
+            break
+
+    return traces
+
+
+def UCT(values, iters=500000, cores=4):
+    for i in range(iters):
+        results = [get_trace.remote(values) for _ in range(cores)]
+        results = [ray.get(task) for task in results]
+
+        for traces in results:
+            for score, trace in traces:
+                for s, p, a in trace:
+                    if p == 0:
+                        values[s].update(a, score)
+                    if p == 1:
+                        values[tuple(reversed(s))].update(a, 1 - score)
 
     return values
 
 
 if __name__ == '__main__':
     values = defaultdict(Node)
-    env = Env()
+    cores = 4
+    ray.init(num_cpus=cores)
 
-    values = UCT(values, env, 50000)
+    values = UCT(values, 5000, cores=cores)
 
     v = {}
     for s in values:
