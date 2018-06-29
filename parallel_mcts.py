@@ -1,6 +1,7 @@
 import ray
 import time
 import tqdm
+import pickle
 from env import Env
 from collections import defaultdict
 
@@ -29,6 +30,9 @@ def get_trace(values, time_limit=0.1):
 
 def UCT_parallel(values, iters=500000, cores=4, time_limit=0.1):
     for i in range(iters):
+        if i % 100 == 0:
+            print('{}th-iter / {}iters'.format(i, iters))
+        
         results = ray.get(
             [get_trace.remote(values, time_limit) for _ in range(cores)])
 
@@ -50,7 +54,10 @@ def get_trace_v2(values):
 
 
 def UCT_parallel_v2(values, iters=500000, cores=4):
-    for i in tqdm.tqdm(range(iters)):
+    for i in range(iters):
+        if i % 100 == 0:
+            print('{}th-iter / {}iters'.format(i, iters))
+        
         traces = ray.get([get_trace_v2.remote(values) for _ in range(cores)])
 
         for trace, score in traces:
@@ -59,6 +66,26 @@ def UCT_parallel_v2(values, iters=500000, cores=4):
                     values[s].update(a, score)
                 if p == 1:
                     values[tuple(reversed(s))].update(a, 1 - score)
+
+    return values
+
+
+def save_values(values, filename):
+    v = {}
+    for s in values:
+        d = values[s].tried
+        v[s] = d
+    with open(filename, 'wb') as f:
+        pickle.dump(v, f)
+
+
+def load_values(filename):
+    with open(filename, 'rb') as f:
+        v = pickle.load(f)
+
+    values = defaultdict(Node)
+    for s in v:
+        values[s].restore(v[s])
 
     return values
 
@@ -78,21 +105,12 @@ if __name__ == '__main__':
     values = defaultdict(Node)
     print('Initialize values...')
     values = UCT(values, Env(), args.init_iters)
+    save_values(values, 'save/mcts_v0.pkl')
+
     print('Parallely update values...')
     values = UCT_parallel(
         values, args.iters, cores=args.cores, time_limit=args.time_limit)
     # values = UCT_parallel_v2(values, args.iters, cores=args.cores)
 
-    v = {}
-    for s in values:
-        d = values[s].tried
-        v[s] = d
+    save_values(values, 'save/mcts_v1.pkl')
 
-    import pickle
-    with open('save/mcts.pkl', 'wb') as f:
-        pickle.dump(v, f)
-
-    v = {}
-    for s in values:
-        d = values[s].tried
-        v[s] = max(ACTIONSPACE, key=lambda a: d[a]['wins'] / d[a]['visits'])
