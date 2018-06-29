@@ -68,15 +68,15 @@ if __name__ == "__main__":
 
     ray.init(num_cpus=args.cores)
     print("Vs simple strategy: {}".format(
-        test(strategy, rounds=args.rounds, cores=args.cores)))
+        parallel_test(strategy, rounds=args.rounds, cores=args.cores)))
     print("Vs hog strategy: {}".format(
-        test(
+        parallel_test(
             strategy,
             base_strategy=final_strategy,
             rounds=args.rounds,
             cores=args.cores)))
     print("Vs hog_contest strategy: {}".format(
-        test(
+        parallel_test(
             strategy,
             base_strategy=contest_strategy,
             rounds=args.rounds,
@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     for j in range(i - 5, i):
         print("Vs {}-th strategy: {}".format(j,
-                                             test(
+                                             parallel_test(
                                                  strategy,
                                                  base_strategy=get_strategy(
                                                      name.format(j)),
