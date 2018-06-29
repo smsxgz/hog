@@ -28,8 +28,8 @@ def get_trace(values, time_limit=0.1):
 
 def UCT_parallel(values, iters=500000, cores=4, time_limit=0.1):
     for i in range(iters):
-        results = [get_trace.remote(values) for _ in range(cores)]
-        results = [ray.get(task) for task in results]
+        results = ray.get(
+            [get_trace.remote(values, time_limit) for _ in range(cores)])
 
         for traces in results:
             for score, trace in traces:
@@ -38,6 +38,26 @@ def UCT_parallel(values, iters=500000, cores=4, time_limit=0.1):
                         values[s].update(a, score)
                     if p == 1:
                         values[tuple(reversed(s))].update(a, 1 - score)
+
+    return values
+
+
+@ray.remote
+def get_trace_v2(values):
+    env = Env()
+    return get_a_trace(values, env)
+
+
+def UCT_parallel_v2(values, iters=500000, cores=4):
+    for i in range(iters):
+        traces = ray.get([get_trace_v2.remote(values) for _ in range(cores)])
+
+        for score, trace in traces:
+            for s, p, a in trace:
+                if p == 0:
+                    values[s].update(a, score)
+                if p == 1:
+                    values[tuple(reversed(s))].update(a, 1 - score)
 
     return values
 
@@ -57,8 +77,9 @@ if __name__ == '__main__':
     print('Init values...')
     values = UCT(values, Env(), 500000)
     print('Parallel update values...')
-    values = UCT_parallel(
-        values, args.iters, cores=args.cores, time_limit=args.time_limit)
+    # values = UCT_parallel(
+    #     values, args.iters, cores=args.cores, time_limit=args.time_limit)
+    values = UCT_parallel(values, args.iters, cores=args.cores)
 
     v = {}
     for s in values:
