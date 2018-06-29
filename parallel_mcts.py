@@ -54,7 +54,9 @@ if __name__ == '__main__':
     ray.init(num_cpus=args.cores)
 
     values = defaultdict(Node)
+    print('Init values...')
     values = UCT(values, Env(), 500000)
+    print('Parallel update values...')
     values = UCT_parallel(
         values, args.iters, cores=args.cores, time_limit=args.time_limit)
 
