@@ -30,6 +30,9 @@ def get_trace(values, time_limit=0.1):
 
 def UCT_parallel(values, iters=500000, cores=4, time_limit=0.1):
     for i in range(iters):
+        if i % 100 == 0:
+            print('{}th-iter / {}iters'.format(i, iters))
+        
         results = ray.get(
             [get_trace.remote(values, time_limit) for _ in range(cores)])
 
@@ -51,11 +54,13 @@ def get_trace_v2(values):
 
 
 def UCT_parallel_v2(values, iters=500000, cores=4):
-    for i in tqdm.tqdm(range(iters)):
+    for i in range(iters):
+        if i % 100 == 0:
+            print('{}th-iter / {}iters'.format(i, iters))
+        
         traces = ray.get([get_trace_v2.remote(values) for _ in range(cores)])
 
         for trace, score in traces:
-            print(score, trace)
             for s, p, a in trace:
                 if p == 0:
                     values[s].update(a, score)
@@ -118,7 +123,3 @@ if __name__ == '__main__':
 
     save_values(values, 'save/mcts_v1.pkl')
 
-    v = {}
-    for s in values:
-        d = values[s].tried
-        v[s] = max(ACTIONSPACE, key=lambda a: d[a]['wins'] / d[a]['visits'])
