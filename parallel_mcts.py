@@ -2,11 +2,9 @@ import ray
 import time
 import copy
 from env import Env
-from collections import defaultdict
 
 ACTIONSPACE = list(range(11))
 
-from mcts import Node
 from mcts import get_a_trace
 from mcts import save_values, load_values
 
