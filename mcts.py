@@ -116,7 +116,8 @@ def load_values(filename):
 if __name__ == '__main__':
     env = Env()
 
-    values = load_values('save/mcts_v0.pkl')
-    values = UCT(values, env, 200000)
+    values = load_values('save/mcts_v21.pkl')
 
-    save_values(values, 'mcts_v1.pkl')
+    for i in range(20):
+        values = UCT(values, env, 100000)
+        save_values(values, 'mcts_v{}.pkl'.format(i + 22))
