@@ -1,5 +1,6 @@
 import ray
 import time
+import tqdm
 from env import Env
 from collections import defaultdict
 
@@ -49,7 +50,7 @@ def get_trace_v2(values):
 
 
 def UCT_parallel_v2(values, iters=500000, cores=4):
-    for i in range(iters):
+    for i in tqdm.tqdm(range(iters)):
         traces = ray.get([get_trace_v2.remote(values) for _ in range(cores)])
 
         for score, trace in traces:
@@ -71,12 +72,12 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    ray.init(num_cpus=args.cores)
+    ray.init()
 
     values = defaultdict(Node)
-    print('Init values...')
+    print('Initialize values...')
     values = UCT(values, Env(), 500000)
-    print('Parallel update values...')
+    print('Parallely update values...')
     # values = UCT_parallel(
     #     values, args.iters, cores=args.cores, time_limit=args.time_limit)
     values = UCT_parallel(values, args.iters, cores=args.cores)
