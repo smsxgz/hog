@@ -54,6 +54,7 @@ def UCT_parallel_v2(values, iters=500000, cores=4):
         traces = ray.get([get_trace_v2.remote(values) for _ in range(cores)])
 
         for score, trace in traces:
+            print(score, trace)
             for s, p, a in trace:
                 if p == 0:
                     values[s].update(a, score)
@@ -68,6 +69,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cores', type=int, default=4)
     parser.add_argument('--time_limit', type=float, default=0.1)
+    parser.add_argument('--init_iters', type=int, default=100000)
     parser.add_argument('--iters', type=int, default=5000)
 
     args = parser.parse_args()
@@ -76,7 +78,7 @@ if __name__ == '__main__':
 
     values = defaultdict(Node)
     print('Initialize values...')
-    values = UCT(values, Env(), 500000)
+    values = UCT(values, Env(), args.init_iters)
     print('Parallely update values...')
     # values = UCT_parallel(
     #     values, args.iters, cores=args.cores, time_limit=args.time_limit)
