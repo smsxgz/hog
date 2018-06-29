@@ -54,16 +54,17 @@ if __name__ == "__main__":
 
     strategy = get_strategy(args.model)
 
-    print("Vs simple strategy: {}".format(test(strategy, rounds=args.rounds)))
-    print("Vs hog strategy: {}".format(
+    print("Vs simple strategy: {:.4f}".format(
+        test(strategy, rounds=args.rounds)))
+    print("Vs hog strategy: {:.4f}".format(
         test(strategy, base_strategy=final_strategy, rounds=args.rounds)))
-    print("Vs hog_contest strategy: {}".format(
+    print("Vs hog_contest strategy: {:.4f}".format(
         test(strategy, base_strategy=contest_strategy, rounds=args.rounds)))
 
     for j in range(i):
-        print("Vs {}-th strategy: {}".format(j,
-                                             test(
-                                                 strategy,
-                                                 base_strategy=get_strategy(
-                                                     name.format(j)),
-                                                 rounds=args.rounds)))
+        print("Vs {}-th strategy: {:.4f}".format(
+            j,
+            test(
+                strategy,
+                base_strategy=get_strategy(name.format(j)),
+                rounds=args.rounds)))

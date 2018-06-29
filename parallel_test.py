@@ -32,8 +32,10 @@ def parallel_test(strategy,
                   base_strategy=simple_strategy,
                   rounds=10000,
                   cores=4):
-    results = ray.get(
-        [test.remote(strategy, base_strategy, rounds // cores) for _ in cores])
+    results = ray.get([
+        test.remote(strategy, base_strategy, rounds // cores)
+        for _ in range(cores)
+    ])
     return sum(results) / len(results)
 
 
@@ -67,15 +69,15 @@ if __name__ == "__main__":
     strategy = get_strategy(args.model)
 
     ray.init(num_cpus=args.cores)
-    print("Vs simple strategy: {}".format(
+    print("Vs simple strategy: {:.4f}".format(
         parallel_test(strategy, rounds=args.rounds, cores=args.cores)))
-    print("Vs hog strategy: {}".format(
+    print("Vs hog strategy: {:.4f}".format(
         parallel_test(
             strategy,
             base_strategy=final_strategy,
             rounds=args.rounds,
             cores=args.cores)))
-    print("Vs hog_contest strategy: {}".format(
+    print("Vs hog_contest strategy: {:.4f}".format(
         parallel_test(
             strategy,
             base_strategy=contest_strategy,
@@ -83,10 +85,10 @@ if __name__ == "__main__":
             cores=args.cores)))
 
     for j in range(i - 5, i):
-        print("Vs {}-th strategy: {}".format(j,
-                                             parallel_test(
-                                                 strategy,
-                                                 base_strategy=get_strategy(
-                                                     name.format(j)),
-                                                 rounds=args.rounds,
-                                                 cores=args.cores)))
+        print("Vs {}-th strategy: {:.4f}".format(
+            j,
+            parallel_test(
+                strategy,
+                base_strategy=get_strategy(name.format(j)),
+                rounds=args.rounds,
+                cores=args.cores)))
