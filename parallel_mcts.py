@@ -34,10 +34,12 @@ def UCT_parallel(values, iters=500000, cores=4, time_limit=0.1):
             print('{}th-iter / {}iters'.format(i, iters))
 
         tmp_values = copy.deepcopy(values)
-        results = ray.get(
-            [get_trace.remote(tmp_values, time_limit) for _ in range(cores)])
+        results = [
+            get_trace.remote(tmp_values, time_limit) for _ in range(cores)
+        ]
 
-        for traces in results:
+        for task in results:
+            traces = ray.get(task)
             for score, trace in traces:
                 for s, p, a in trace:
                     if p == 0:
