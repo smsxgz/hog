@@ -8,7 +8,6 @@ from collections import defaultdict
 ACTIONSPACE = list(range(11))
 
 from mcts import Node
-from mcts import UCT
 from mcts import get_a_trace
 
 
@@ -51,12 +50,13 @@ def UCT_parallel(values, iters=500000, cores=4, time_limit=0.1):
 
 
 @ray.remote
-def get_trace_v2(values):
+def get_trace_v2(values, mini_iter=10):
     env = Env()
-    return get_a_trace(values, env)
+    traces = [get_a_trace(values, env) for _ in range(mini_iter)]
+    return traces
 
 
-def UCT_parallel_v2(values, iters=500000, cores=4):
+def UCT_parallel_v2(values, iters=500000, cores=4, mini_iter=10):
     for i in range(iters):
         if i % 100 == 0:
             print('{}th-iter / {}iters'.format(i, iters))
@@ -109,6 +109,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cores', type=int, default=4)
     parser.add_argument('--time_limit', type=float, default=0.1)
+    parser.add_argument('--mini_iter', type=int, default=10)
     # parser.add_argument('--init_iters', type=int, default=100000)
     parser.add_argument('--iters', type=int, default=5000)
 
@@ -121,8 +122,9 @@ if __name__ == '__main__':
     values = load_values('save/mcts_v0.pkl')
 
     print('Parallely update values...')
-    values = UCT_parallel(
-        values, args.iters, cores=args.cores, time_limit=args.time_limit)
-    # values = UCT_parallel_v2(values, args.iters, cores=args.cores)
+    # values = UCT_parallel(
+    #     values, args.iters, cores=args.cores, time_limit=args.time_limit)
+    values = UCT_parallel_v2(
+        values, args.iters, cores=args.cores, mini_iter=args.mini_iter)
 
     save_values(values, 'mcts_v1.pkl')
