@@ -29,6 +29,11 @@ class Node:
         assert self.untried == []
         return max(ACTIONSPACE, key=lambda a: self.get_weights(a))
 
+    def restore(self, d):
+        self.tried = d
+        self.visits = sum(d[a]['visits'] for a in d)
+        self.untried = [a for a in ACTIONSPACE if a not in d]
+
 
 def wrapper_step(env, action):
     s, p, w = env.step(action)

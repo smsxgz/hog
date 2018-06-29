@@ -1,6 +1,7 @@
 import ray
 import time
 import tqdm
+import pickle
 from env import Env
 from collections import defaultdict
 
@@ -64,6 +65,26 @@ def UCT_parallel_v2(values, iters=500000, cores=4):
     return values
 
 
+def save_values(values, filename):
+    v = {}
+    for s in values:
+        d = values[s].tried
+        v[s] = d
+    with open(filename, 'wb') as f:
+        pickle.dump(v, f)
+
+
+def load_values(filename):
+    with open(filename, 'rb') as f:
+        v = pickle.load(f)
+
+    values = defaultdict(Node)
+    for s in v:
+        values[s].restore(v[s])
+
+    return values
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -79,19 +100,14 @@ if __name__ == '__main__':
     values = defaultdict(Node)
     print('Initialize values...')
     values = UCT(values, Env(), args.init_iters)
+    save_values(values, 'save/mcts_v0.pkl')
+
     print('Parallely update values...')
-    # values = UCT_parallel(
-    #     values, args.iters, cores=args.cores, time_limit=args.time_limit)
-    values = UCT_parallel_v2(values, args.iters, cores=args.cores)
+    values = UCT_parallel(
+        values, args.iters, cores=args.cores, time_limit=args.time_limit)
+    # values = UCT_parallel_v2(values, args.iters, cores=args.cores)
 
-    v = {}
-    for s in values:
-        d = values[s].tried
-        v[s] = d
-
-    import pickle
-    with open('save/mcts.pkl', 'wb') as f:
-        pickle.dump(v, f)
+    save_values(values, 'save/mcts_v1.pkl')
 
     v = {}
     for s in values:
