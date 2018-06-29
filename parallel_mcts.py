@@ -54,7 +54,6 @@ def UCT_parallel_v2(values, iters=500000, cores=4):
         traces = ray.get([get_trace_v2.remote(values) for _ in range(cores)])
 
         for trace, score in traces:
-            print(score, trace)
             for s, p, a in trace:
                 if p == 0:
                     values[s].update(a, score)
@@ -80,9 +79,9 @@ if __name__ == '__main__':
     print('Initialize values...')
     values = UCT(values, Env(), args.init_iters)
     print('Parallely update values...')
-    # values = UCT_parallel(
-    #     values, args.iters, cores=args.cores, time_limit=args.time_limit)
-    values = UCT_parallel_v2(values, args.iters, cores=args.cores)
+    values = UCT_parallel(
+        values, args.iters, cores=args.cores, time_limit=args.time_limit)
+    # values = UCT_parallel_v2(values, args.iters, cores=args.cores)
 
     v = {}
     for s in values:
