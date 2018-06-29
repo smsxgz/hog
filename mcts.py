@@ -1,3 +1,4 @@
+import time
 from env import Env
 import numpy as np
 from collections import defaultdict
@@ -29,45 +30,37 @@ class Node:
         return max(ACTIONSPACE, key=lambda a: self.get_weights(a))
 
 
-def get_state_key(state, player):
-    if player == 0:
-        return state
-    elif player == 1:
-        return tuple(reversed(state))
+def wrapper_step(env, action):
+    s, p, w = env.step(action)
+    done = False
+    score = None
+    if w is not None:
+        done = True
+        score = 1 - w
+    s_key = tuple(reversed(s)) if p == 1 else s
+    return s, p, done, score, s_key
 
 
 def UCT(values, env, iters=500000):
     for i in range(iters):
         s, p = env.reset()
-        s_key = get_state_key(s, p)
+        s_key = tuple(reversed(s)) if p == 1 else s
 
         trace = []
         done = False
         while values[s_key].untried == [] and not done:
             a = values[s_key].UCTselect()
             trace.append((s, p, a))
-
-            s, p, w = env.step(a)
-            s_key = get_state_key(s, p)
-            if w is not None:
-                done = True
-                score = 1 - w
+            s, p, done, score, s_key = wrapper_step(env, a)
 
         if values[s_key].untried != [] and not done:
             a = np.random.choice(values[s_key].untried)
             trace.append((s, p, a))
-
-            s, p, w = env.step(a)
-            s_key = get_state_key(s, p)
-            if w is not None:
-                done = True
-                score = 1 - w
+            s, p, done, score, s_key = wrapper_step(env, a)
 
         while not done:
-            *_, w = env.step(np.random.choice(ACTIONSPACE))
-            if w is not None:
-                done = True
-                score = 1 - w
+            _, _, done, score, _ = wrapper_step(env,
+                                                np.random.choice(ACTIONSPACE))
 
         for s, p, a in trace:
             if p == 0:
@@ -78,17 +71,55 @@ def UCT(values, env, iters=500000):
     return values
 
 
+def UCT_test(values, env, time_limit=2):
+    start = time.time()
+    count = 0
+    while True:
+        count += 1
+        s, p = env.reset()
+        s_key = tuple(reversed(s)) if p == 1 else s
+
+        trace = []
+        done = False
+        while values[s_key].untried == [] and not done:
+            a = values[s_key].UCTselect()
+            trace.append((s, p, a))
+            s, p, done, score, s_key = wrapper_step(env, a)
+
+        if values[s_key].untried != [] and not done:
+            a = np.random.choice(values[s_key].untried)
+            trace.append((s, p, a))
+            s, p, done, score, s_key = wrapper_step(env, a)
+
+        while not done:
+            _, _, done, score, _ = wrapper_step(env,
+                                                np.random.choice(ACTIONSPACE))
+
+        for s, p, a in trace:
+            if p == 0:
+                values[s].update(a, score)
+            if p == 1:
+                values[tuple(reversed(s))].update(a, 1 - score)
+
+        if time.time() - start > time_limit:
+            print(count)
+            break
+
+    return values
+
+
 if __name__ == '__main__':
     values = defaultdict(Node)
     env = Env()
 
-    values = UCT(values, env, 50000)
+    values = UCT(values, env, 200000)
+    values = UCT_test(values, env, 1)
 
-    v = {}
-    for s in values:
-        d = values[s].tried
-        v[s] = max(ACTIONSPACE, key=lambda a: d[a]['wins'] / d[a]['visits'])
-
-    import pickle
-    with open('save/mcts.pkl', 'wb') as f:
-        pickle.dump(v, f)
+    # v = {}
+    # for s in values:
+    #     d = values[s].tried
+    #     v[s] = max(ACTIONSPACE, key=lambda a: d[a]['wins'] / d[a]['visits'])
+    #
+    # import pickle
+    # with open('save/mcts.pkl', 'wb') as f:
+    #     pickle.dump(v, f)
