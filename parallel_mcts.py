@@ -73,6 +73,15 @@ def save_values(values, filename):
     with open(filename, 'wb') as f:
         pickle.dump(v, f)
 
+    q = {}
+    for s in v:
+        q[s] = []
+        for i in range(11):
+            d = v[s].get(i, {'visits': 2, 'wins': 1})
+            q[s].append(d['wins'] / d['visits'])
+    with open('strategy-' + filename, 'wb') as f:
+        pickle.dump(q, f)
+
 
 def load_values(filename):
     with open(filename, 'rb') as f:
