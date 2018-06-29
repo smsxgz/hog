@@ -53,7 +53,7 @@ def UCT_parallel_v2(values, iters=500000, cores=4):
     for i in tqdm.tqdm(range(iters)):
         traces = ray.get([get_trace_v2.remote(values) for _ in range(cores)])
 
-        for score, trace in traces:
+        for trace, score in traces:
             print(score, trace)
             for s, p, a in trace:
                 if p == 0:
