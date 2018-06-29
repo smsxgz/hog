@@ -50,7 +50,7 @@ def wrapper_step(env, action):
 
 
 @ray.remote
-def get_trace(values, time_limit=60):
+def get_trace(values, time_limit=10):
     env = Env()
     traces = []
     start = time.time()
@@ -82,7 +82,7 @@ def get_trace(values, time_limit=60):
     return traces
 
 
-def UCT(values, iters=500000, cores=4):
+def UCT(values, iters=500000, cores=4, time_limit=10):
     for i in range(iters):
         results = [get_trace.remote(values) for _ in range(cores)]
         results = [ray.get(task) for task in results]
@@ -99,11 +99,19 @@ def UCT(values, iters=500000, cores=4):
 
 
 if __name__ == '__main__':
-    values = defaultdict(Node)
-    cores = 4
-    ray.init(num_cpus=cores)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cores', type=int, default=4)
+    parser.add_argument('--time_limit', type=int, default=10)
+    parser.add_argument('--iters', type=int, default=500)
 
-    values = UCT(values, 5000, cores=cores)
+    args = parser.parse_args()
+
+    ray.init(num_cpus=args.cores)
+
+    values = defaultdict(Node)
+    values = UCT(
+        values, args.iters, cores=args.cores, time_limit=args.time_limit)
 
     v = {}
     for s in values:
