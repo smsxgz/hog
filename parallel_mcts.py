@@ -62,15 +62,16 @@ def UCT_parallel_v2(values, iters=500000, cores=4, mini_iter=10):
             print('{}th-iter / {}iters'.format(i, iters))
 
         tmp_values = copy.deepcopy(values)
-        traces = [get_trace_v2.remote(tmp_values) for _ in range(cores)]
+        results = [get_trace_v2.remote(tmp_values) for _ in range(cores)]
 
-        for task in traces:
-            trace, score = ray.get(task)
-            for s, p, a in trace:
-                if p == 0:
-                    values[s].update(a, score)
-                if p == 1:
-                    values[tuple(reversed(s))].update(a, 1 - score)
+        for task in results:
+            traces = ray.get(task)
+            for trace, score in traces:
+                for s, p, a in trace:
+                    if p == 0:
+                        values[s].update(a, score)
+                    if p == 1:
+                        values[tuple(reversed(s))].update(a, 1 - score)
 
     return values
 
