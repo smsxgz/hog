@@ -1,7 +1,6 @@
 import ray
 import time
 import copy
-import pickle
 from env import Env
 from collections import defaultdict
 
@@ -9,6 +8,7 @@ ACTIONSPACE = list(range(11))
 
 from mcts import Node
 from mcts import get_a_trace
+from mcts import save_values, load_values
 
 
 @ray.remote
@@ -76,35 +76,6 @@ def UCT_parallel_v2(values, iters=500000, cores=4, mini_iter=10):
     return values
 
 
-def save_values(values, filename):
-    v = {}
-    for s in values:
-        d = values[s].tried
-        v[s] = d
-    with open('save/' + filename, 'wb') as f:
-        pickle.dump(v, f)
-
-    q = {}
-    for s in v:
-        q[s] = []
-        for i in range(11):
-            d = v[s].get(i, {'visits': 2, 'wins': 1})
-            q[s].append(d['wins'] / d['visits'])
-    with open('save/strategy-' + filename, 'wb') as f:
-        pickle.dump(q, f)
-
-
-def load_values(filename):
-    with open(filename, 'rb') as f:
-        v = pickle.load(f)
-
-    values = defaultdict(Node)
-    for s in v:
-        values[s].restore(v[s])
-
-    return values
-
-
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -128,4 +99,4 @@ if __name__ == '__main__':
     values = UCT_parallel_v2(
         values, args.iters, cores=args.cores, mini_iter=args.mini_iter)
 
-    save_values(values, 'mcts_v1.pkl')
+    save_values(values, 'para-mcts_v1.pkl')

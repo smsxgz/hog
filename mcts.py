@@ -1,4 +1,4 @@
-import time
+import pickle
 from env import Env
 import numpy as np
 from collections import defaultdict
@@ -81,22 +81,31 @@ def UCT(values, env, iters=500000):
     return values
 
 
-def UCT_test(values, env, time_limit=2):
-    start = time.time()
-    count = 0
-    while True:
-        count += 1
-        trace, score = get_a_trace(values, env)
+def save_values(values, filename):
+    v = {}
+    for s in values:
+        d = values[s].tried
+        v[s] = d
+    with open('save/' + filename, 'wb') as f:
+        pickle.dump(v, f)
 
-        for s, p, a in trace:
-            if p == 0:
-                values[s].update(a, score)
-            if p == 1:
-                values[tuple(reversed(s))].update(a, 1 - score)
+    q = {}
+    for s in v:
+        q[s] = []
+        for i in range(11):
+            d = v[s].get(i, {'visits': 2, 'wins': 1})
+            q[s].append(d['wins'] / d['visits'])
+    with open('save/strategy-' + filename, 'wb') as f:
+        pickle.dump(q, f)
 
-        if time.time() - start > time_limit:
-            print(count)
-            break
+
+def load_values(filename):
+    with open(filename, 'rb') as f:
+        v = pickle.load(f)
+
+    values = defaultdict(Node)
+    for s in v:
+        values[s].restore(v[s])
 
     return values
 
@@ -106,13 +115,5 @@ if __name__ == '__main__':
     env = Env()
 
     values = UCT(values, env, 200000)
-    values = UCT_test(values, env, 1)
 
-    # v = {}
-    # for s in values:
-    #     d = values[s].tried
-    #     v[s] = max(ACTIONSPACE, key=lambda a: d[a]['wins'] / d[a]['visits'])
-    #
-    # import pickle
-    # with open('save/mcts.pkl', 'wb') as f:
-    #     pickle.dump(v, f)
+    save_values(values, 'mcts_v1.pkl')
