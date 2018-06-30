@@ -73,7 +73,7 @@ def get_vote_strategy(file):
                 actions.append(np.argmax(Q[state]))
             else:
                 actions.appendq(np.random.randint(11))
-        return Counter(actions).most_common(1)[0]
+        return Counter(actions).most_common(1)[0][0]
 
     return strategy
 
