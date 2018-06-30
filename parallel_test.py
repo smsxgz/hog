@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
     try:
         i = int(tmp2[1][1:])
-        for j in range(i - 5, i):
+        for j in range(i - 1, i - 6, -1):
             print("Vs {}-th strategy: {:.4f}".format(
                 j,
                 parallel_test(
