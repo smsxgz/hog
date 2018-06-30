@@ -64,7 +64,6 @@ if __name__ == "__main__":
     tmp1 = args.model.split('.')
     tmp2 = tmp1[0].split('_')
     name = tmp2[0] + '_v{}.' + tmp1[1]
-    i = int(tmp2[1][1:])
 
     strategy = get_strategy(args.model)
 
@@ -84,6 +83,7 @@ if __name__ == "__main__":
             rounds=args.rounds,
             cores=args.cores)))
 
+    i = int(tmp2[1][1:])
     for j in range(i - 5, i):
         print("Vs {}-th strategy: {:.4f}".format(
             j,
