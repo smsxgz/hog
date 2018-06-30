@@ -66,14 +66,14 @@ def get_vote_strategy(file):
         with open(file, 'rb') as f:
             Q_list.append(pickle.load(f))
 
+    A = {}
+    for i in range(100):
+        for j in range(100):
+            A[(i, j)] = Counter(
+                [np.argmax(Q[(i, j)]) for Q in Q_list]).most_common(1)[0][0]
+
     def strategy(*state):
-        actions = []
-        for Q in Q_list:
-            if state in Q:
-                actions.append(np.argmax(Q[state]))
-            else:
-                actions.appendq(np.random.randint(11))
-        return Counter(actions).most_common(1)[0][0]
+        return A[state]
 
     return strategy
 
