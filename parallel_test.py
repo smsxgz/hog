@@ -1,6 +1,7 @@
 import ray
 import pickle
 import numpy as np
+from collections import Counter
 
 from env import DeterministicOpponentEnv
 
@@ -52,6 +53,31 @@ def get_strategy(file):
     return strategy
 
 
+def get_vote_strategy(file):
+
+    tmp1 = file.split('.')
+    tmp2 = tmp1[0].split('_')
+    name = tmp2[0] + '_v{}.' + tmp1[1]
+    i = int(tmp2[1][1:])
+    file_list = [name.format(j) for j in range(i - 9, i + 1)]
+
+    Q_list = []
+    for file in file_list:
+        with open(file, 'rb') as f:
+            Q_list.append(pickle.load(f))
+
+    def strategy(*state):
+        actions = []
+        for Q in Q_list:
+            if state in Q:
+                actions.append(np.argmax(Q[state]))
+            else:
+                actions.appendq(np.random.randint(11))
+        return Counter(actions).most_common(1)[0]
+
+    return strategy
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
@@ -83,12 +109,48 @@ if __name__ == "__main__":
             rounds=args.rounds,
             cores=args.cores)))
 
-    i = int(tmp2[1][1:])
-    for j in range(i - 5, i):
-        print("Vs {}-th strategy: {:.4f}".format(
-            j,
-            parallel_test(
-                strategy,
-                base_strategy=get_strategy(name.format(j)),
-                rounds=args.rounds,
-                cores=args.cores)))
+    try:
+        i = int(tmp2[1][1:])
+        for j in range(i - 5, i):
+            print("Vs {}-th strategy: {:.4f}".format(
+                j,
+                parallel_test(
+                    strategy,
+                    base_strategy=get_strategy(name.format(j)),
+                    rounds=args.rounds,
+                    cores=args.cores)))
+
+    except Exception:
+        pass
+
+    strategy = get_vote_strategy(args.model)
+    print('+' * 50)
+    print('Vote strategy:')
+    print("Vs simple strategy: {:.4f}".format(
+        parallel_test(strategy, rounds=args.rounds, cores=args.cores)))
+    print("Vs hog strategy: {:.4f}".format(
+        parallel_test(
+            strategy,
+            base_strategy=final_strategy,
+            rounds=args.rounds,
+            cores=args.cores)))
+    print("Vs hog_contest strategy: {:.4f}".format(
+        parallel_test(
+            strategy,
+            base_strategy=contest_strategy,
+            rounds=args.rounds,
+            cores=args.cores)))
+
+    try:
+        i = int(tmp2[1][1:])
+        for j in range(i - 5, i):
+            print("Vs {}-th strategy: {:.4f}".format(
+                j,
+                parallel_test(
+                    strategy,
+                    base_strategy=get_strategy(name.format(j)),
+                    rounds=args.rounds,
+                    cores=args.cores)))
+
+    except Exception:
+        pass
