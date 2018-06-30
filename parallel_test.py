@@ -114,6 +114,13 @@ if __name__ == "__main__":
             rounds=args.rounds,
             cores=args.cores)))
 
+    print("Vs mcts_base strategy: {:.4f}".format(
+        parallel_test(
+            strategy,
+            base_strategy=get_strategy('save/strategy-mcts_base.pkl'),
+            rounds=args.rounds,
+            cores=args.cores)))
+
     try:
         i = int(tmp2[1][1:])
         for j in range(i - 5, i):
