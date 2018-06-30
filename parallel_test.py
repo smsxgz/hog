@@ -84,6 +84,7 @@ if __name__ == "__main__":
     parser.add_argument('--model')
     parser.add_argument('--rounds', type=int, default=10000)
     parser.add_argument('--cores', type=int, default=4)
+    parser.add_argument('--vote', action='store_true', default=False)
 
     args = parser.parse_args()
 
@@ -91,41 +92,13 @@ if __name__ == "__main__":
     tmp2 = tmp1[0].split('_')
     name = tmp2[0] + '_v{}.' + tmp1[1]
 
-    strategy = get_strategy(args.model)
+    if args.vote:
+        print('Vote strategy:')
+        strategy = get_vote_strategy(args.model)
+    else:
+        strategy = get_strategy(args.model)
 
     ray.init(num_cpus=args.cores)
-    print("Vs simple strategy: {:.4f}".format(
-        parallel_test(strategy, rounds=args.rounds, cores=args.cores)))
-    print("Vs hog strategy: {:.4f}".format(
-        parallel_test(
-            strategy,
-            base_strategy=final_strategy,
-            rounds=args.rounds,
-            cores=args.cores)))
-    print("Vs hog_contest strategy: {:.4f}".format(
-        parallel_test(
-            strategy,
-            base_strategy=contest_strategy,
-            rounds=args.rounds,
-            cores=args.cores)))
-
-    try:
-        i = int(tmp2[1][1:])
-        for j in range(i - 5, i):
-            print("Vs {}-th strategy: {:.4f}".format(
-                j,
-                parallel_test(
-                    strategy,
-                    base_strategy=get_strategy(name.format(j)),
-                    rounds=args.rounds,
-                    cores=args.cores)))
-
-    except Exception:
-        pass
-
-    strategy = get_vote_strategy(args.model)
-    print('+' * 50)
-    print('Vote strategy:')
     print("Vs simple strategy: {:.4f}".format(
         parallel_test(strategy, rounds=args.rounds, cores=args.cores)))
     print("Vs hog strategy: {:.4f}".format(
