@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
     # make_strategy_file(args.model)
 
-    with open('save/strategy-mcts_v56.pkl', 'rb') as f:
+    with open('save/strategy-mcts_v80.pkl', 'rb') as f:
         Q = pickle.load(f)
 
     strategy = {}
@@ -42,7 +42,7 @@ if __name__ == '__main__':
             else:
                 strategy[(i, j)] = contest_strategy(i, j)
 
-    with open('no_import_strategy_v2.py', 'w') as f:
+    with open('no_import_strategy_v3.py', 'w') as f:
         f.write('strategy = {\n')
         for i in range(100):
             res = [f'({i}, {j}): {strategy[(i, j)]}, ' for j in range(100)]
