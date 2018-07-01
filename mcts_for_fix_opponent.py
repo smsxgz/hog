@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
     env = Env(simple_strategy)
 
-    values = load_values('save/mcts_base.pkl')
+    values = defaultdict(Node)
 
     step = 0
     while True:
