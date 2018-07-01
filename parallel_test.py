@@ -84,6 +84,11 @@ if __name__ == "__main__":
     parser.add_argument('--model')
     parser.add_argument('--rounds', type=int, default=10000)
     parser.add_argument('--cores', type=int, default=4)
+    parser.add_argument('--all', action='store_true', default=False)
+    parser.add_argument('--simple', action='store_true', default=True)
+    parser.add_argument('--hog', action='store_true', default=False)
+    parser.add_argument('--mcts_base', action='store_true', default=False)
+    parser.add_argument('--before', action='store_true', default=False)
     parser.add_argument('--vote', action='store_true', default=False)
 
     args = parser.parse_args()
@@ -99,38 +104,46 @@ if __name__ == "__main__":
         strategy = get_strategy(args.model)
 
     ray.init(num_cpus=args.cores)
-    print("Vs simple strategy: {:.4f}".format(
-        parallel_test(strategy, rounds=args.rounds, cores=args.cores)))
-    print("Vs hog strategy: {:.4f}".format(
-        parallel_test(
-            strategy,
-            base_strategy=final_strategy,
-            rounds=args.rounds,
-            cores=args.cores)))
-    print("Vs hog_contest strategy: {:.4f}".format(
-        parallel_test(
-            strategy,
-            base_strategy=contest_strategy,
-            rounds=args.rounds,
-            cores=args.cores)))
 
-    print("Vs mcts_base strategy: {:.4f}".format(
-        parallel_test(
-            strategy,
-            base_strategy=get_strategy('save/strategy-mcts_base.pkl'),
-            rounds=args.rounds,
-            cores=args.cores)))
+    if args.all:
+        args.simple, args.hog, args.mcts_base, args.before = True, True, True, True
 
-    try:
-        i = int(tmp2[1][1:])
-        for j in range(i - 1, i - 6, -1):
-            print("Vs {}-th strategy: {:.4f}".format(
-                j,
-                parallel_test(
-                    strategy,
-                    base_strategy=get_strategy(name.format(j)),
-                    rounds=args.rounds,
-                    cores=args.cores)))
+    if args.simple:
+        print("Vs simple strategy: {:.4f}".format(
+            parallel_test(strategy, rounds=args.rounds, cores=args.cores)))
 
-    except Exception:
-        pass
+    if args.hog:
+        print("Vs hog strategy: {:.4f}".format(
+            parallel_test(
+                strategy,
+                base_strategy=final_strategy,
+                rounds=args.rounds,
+                cores=args.cores)))
+        print("Vs hog_contest strategy: {:.4f}".format(
+            parallel_test(
+                strategy,
+                base_strategy=contest_strategy,
+                rounds=args.rounds,
+                cores=args.cores)))
+    if args.mcts_base:
+        print("Vs mcts_base strategy: {:.4f}".format(
+            parallel_test(
+                strategy,
+                base_strategy=get_strategy('save/strategy-mcts_base.pkl'),
+                rounds=args.rounds,
+                cores=args.cores)))
+
+    if args.before:
+        try:
+            i = int(tmp2[1][1:])
+            for j in range(i - 1, i - 6, -1):
+                print("Vs {}-th strategy: {:.4f}".format(
+                    j,
+                    parallel_test(
+                        strategy,
+                        base_strategy=get_strategy(name.format(j)),
+                        rounds=args.rounds,
+                        cores=args.cores)))
+
+        except Exception:
+            pass
