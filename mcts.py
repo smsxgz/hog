@@ -117,7 +117,7 @@ if __name__ == '__main__':
     env = Env()
 
     values = load_values('save/mcts_base.pkl')
-    
+
     step = 0
     while True:
         values = UCT(values, env, 500000)
