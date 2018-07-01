@@ -48,7 +48,7 @@ def get_strategy(file):
         if state in Q:
             return np.argmax(Q[state])
         else:
-            return np.random.randint(11)
+            return contest_strategy(*state)
 
     return strategy
 
@@ -69,8 +69,13 @@ def get_vote_strategy(file):
     A = {}
     for i in range(100):
         for j in range(100):
-            A[(i, j)] = Counter(
-                [np.argmax(Q[(i, j)]) for Q in Q_list]).most_common(1)[0][0]
+            lst = []
+            for Q in Q_list:
+                if (i, j) in Q:
+                    lst.append(np.argmax(Q[(i, j)]))
+                else:
+                    lst.append(contest_strategy(i, j))
+            A[(i, j)] = Counter(lst).most_common(1)[0][0]
 
     def strategy(*state):
         return A[state]
