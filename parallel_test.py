@@ -59,7 +59,7 @@ def get_vote_strategy(file):
     tmp2 = tmp1[0].split('_')
     name = tmp2[0] + '_v{}.' + tmp1[1]
     i = int(tmp2[1][1:])
-    file_list = [name.format(j) for j in range(i - 9, i + 1)]
+    file_list = [name.format(j) for j in range(i + 1)]
 
     Q_list = []
     for file in file_list:
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     if args.before:
         try:
             i = int(tmp2[1][1:])
-            for j in range(i - 1, i - 6, -1):
+            for j in range(i - 5, -1, -5):
                 print("Vs {}-th strategy: {:.4f}".format(
                     j,
                     parallel_test(

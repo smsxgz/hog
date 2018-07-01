@@ -1,6 +1,7 @@
 import json
 import pickle
 import numpy as np
+from collections import Counter
 from hog_contest import final_strategy as contest_strategy
 
 
@@ -30,19 +31,41 @@ if __name__ == '__main__':
 
     # make_strategy_file(args.model)
 
-    with open('save/strategy-mcts_v80.pkl', 'rb') as f:
-        Q = pickle.load(f)
+    # with open('save/strategy-mcts_v80.pkl', 'rb') as f:
+    #     Q = pickle.load(f)
 
-    strategy = {}
+    # strategy = {}
+    # for i in range(100):
+    #     for j in range(100):
+
+    #         if (i, j) in Q:
+    #             strategy[(i, j)] = np.argmax(Q[(i, j)])
+    #         else:
+    #             strategy[(i, j)] = contest_strategy(i, j)
+    
+    name = 'save/strategy-mcts_v{}.pkl'
+    i = 115
+    file_list = [name.format(j) for j in range(i + 1)] 
+
+    Q_list = []
+    for file in file_list:
+        with open(file, 'rb') as f:
+            Q_list.append(pickle.load(f))
+
+    A = {}
     for i in range(100):
         for j in range(100):
+            lst = []
+            for Q in Q_list:
+                if (i, j) in Q:
+                    lst.append(np.argmax(Q[(i, j)]))
+                else:
+                    lst.append(contest_strategy(i, j)) 
+            A[(i, j)] = Counter(lst).most_common(1)[0][0]
 
-            if (i, j) in Q:
-                strategy[(i, j)] = np.argmax(Q[(i, j)])
-            else:
-                strategy[(i, j)] = contest_strategy(i, j)
+    strategy = A
 
-    with open('no_import_strategy_v3.py', 'w') as f:
+    with open('no_import_strategy_v4.py', 'w') as f:
         f.write('strategy = {\n')
         for i in range(100):
             res = [f'({i}, {j}): {strategy[(i, j)]}, ' for j in range(100)]
