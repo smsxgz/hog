@@ -43,9 +43,9 @@ if __name__ == '__main__':
     #         else:
     #             strategy[(i, j)] = contest_strategy(i, j)
     
-    name = 'save/strategy-mcts_v{}.pkl'
-    i = 115
-    file_list = [name.format(j) for j in range(i + 1)] 
+    name = 'save/strategy-fix-opponent-mcts_v{}.pkl'
+    i = 58
+    file_list = [name.format(j) for j in range(30, i + 1)] 
 
     Q_list = []
     for file in file_list:
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     strategy = A
 
-    with open('no_import_strategy_v4.py', 'w') as f:
+    with open('no_import_strategy_for_fix_opponent.py', 'w') as f:
         f.write('strategy = {\n')
         for i in range(100):
             res = [f'({i}, {j}): {strategy[(i, j)]}, ' for j in range(100)]
